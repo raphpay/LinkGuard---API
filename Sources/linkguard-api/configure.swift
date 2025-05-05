@@ -23,4 +23,5 @@ func registerMigrations(_ app: Application) {
 	app.migrations.add(CreateUser())
 	app.migrations.add(CreateScan())
 	app.migrations.add(CreateLinkResult())
+	app.migrations.add(CreateToken())
 }
