@@ -35,4 +35,9 @@ final class User: Model, Content, @unchecked Sendable {
 		self.passwordHash = passwordHash
 		self.frequency = frequency
 	}
+
+	func toPublicOutput() throws -> User.PublicOutput {
+		let id = try self.requireID()
+		return .init(id: id, email: email, frequency: frequency)
+	}
 }
