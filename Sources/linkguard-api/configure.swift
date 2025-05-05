@@ -11,6 +11,16 @@ public func configure(_ app: Application) async throws {
     // uncomment to serve files from /Public folder
     // app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
 
+	// register migrations
+	registerMigrations(app)
+
     // register routes
     try routes(app)
+}
+
+func registerMigrations(_ app: Application) {
+	// 05/05/2025
+	app.migrations.add(CreateUser())
+	app.migrations.add(CreateScan())
+	app.migrations.add(CreateLinkResult())
 }
