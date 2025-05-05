@@ -9,8 +9,6 @@ import Fluent
 import Vapor
 
 struct ScanController: RouteCollection {
-	let logger = Logger(label: "info")
-
 	func boot(routes: any RoutesBuilder) throws {
 		// Group routes under "/api"
 		let scans = routes.grouped("api", "scans")
@@ -37,6 +35,10 @@ struct ScanController: RouteCollection {
 	func createWithoutAccount(req: Request) async throws -> Scan {
 		let input = try req.content.decode(Scan.InputWithoutAccount.self)
 		let scan = input.toModel()
+
+		guard input.email.isValidEmail() else {
+			throw Abort(.badRequest, reason: "badRequest.invalidEmail")
+		}
 
 		try await scan.save(on: req.db)
 		let scanID = try scan.requireID()
@@ -89,10 +91,12 @@ struct ScanController: RouteCollection {
 	func removeByID(req: Request) async throws -> HTTPResponseStatus {
 		let scanID = try await getScanID(on: req)
 		let scan = try await getScan(scanID, on: req.db)
-		let linkResult = try await scan.$linkResult.get(on: req.db)
 
-		try await scan.delete(force: true, on: req.db)
-		try await linkResult?.delete(force: true, on: req.db)
+		try await scan.delete(on: req.db)
+		if let linkResult = try await scan.$linkResult.get(on: req.db) {
+			let linkResultID = try linkResult.requireID()
+			_ = try await LinkResultController().delete(linkResultID, on: req)
+		}
 
 		return .noContent
 	}
