@@ -9,6 +9,9 @@ import Fluent
 import Vapor
 
 struct ScanController: RouteCollection {
+	/// Registers all scan-related routes with the application.
+	/// - Parameter routes: The base `RoutesBuilder` to register routes to.
+	/// - Throws: An error if route registration fails.
 	func boot(routes: any RoutesBuilder) throws {
 		// Group routes under "/api"
 		let scans = routes.grouped("api", "scans")
@@ -31,6 +34,10 @@ struct ScanController: RouteCollection {
 	}
 
 	// MARK: - CREATE
+	/// Creates a new scan without a user account.
+	/// - Parameter req: The incoming request containing scan input and user email.
+	/// - Returns: A newly created `Scan` instance.
+	/// - Throws: `.badRequest` if the email is invalid or if saving or scanning fails.
 	@Sendable
 	func createWithoutAccount(req: Request) async throws -> Scan {
 		let input = try req.content.decode(Scan.InputWithoutAccount.self)
@@ -47,6 +54,10 @@ struct ScanController: RouteCollection {
 		return scan
 	}
 
+	/// Creates a new scan for an authenticated user.
+	/// - Parameter req: The incoming authenticated request with scan input.
+	/// - Returns: The created `Scan` instance.
+	/// - Throws: An error if saving or scanning fails.
 	@Sendable
 	func create(req: Request) async throws -> Scan {
 		let input = try req.content.decode(Scan.Input.self)
@@ -75,18 +86,10 @@ struct ScanController: RouteCollection {
 		return scan
 	}
 
-	// MARK: - Delete
-	/// Remove a specific scan by ID
-	/// - Parameter req: The incoming request containing the scan ID.
-	/// - Returns: An `HTTPResponseStatus` indicating that no content is being returned (204 No Content).
-	/// - Throws: An error if the scan cannot be found or if the database deletion fails.
-	/// - Note: This function retrieves the scan by its ID from the database.
-	///     It then deletes the scan from the database.
-	///     If the scan is not found, it throws a `notFound` error.
-	///     If the database deletion fails, it throws an error.
-	/// - Important: This function should be called with caution and should only be used by administrators.
-	///     It ensures that the scan is deleted from the database.
-	///     Use this function only if you want to delete a specific scan.
+	/// Deletes a specific scan and its associated `LinkResult`.
+	/// - Parameter req: The incoming request with scan ID parameter.
+	/// - Returns: `.noContent` on successful deletion.
+	/// - Throws: `.notFound` if the scan is not found, or any database deletion error.
 	@Sendable
 	func removeByID(req: Request) async throws -> HTTPResponseStatus {
 		let scanID = try await getScanID(on: req)
@@ -134,6 +137,12 @@ extension ScanController {
 }
 
 extension ScanController {
+	/// Performs a link scan and stores the result.
+	/// - Parameters:
+	///   - input: The URL to scan.
+	///   - scanID: The associated `Scan` ID.
+	///   - req: The current request context with access to the HTTP client and database.
+	/// - Throws: An error if saving the `LinkResult` fails.
 	private func handleScan(_ input: String, with scanID: Scan.IDValue, on req: Request) async throws {
 		let client = req.client
 

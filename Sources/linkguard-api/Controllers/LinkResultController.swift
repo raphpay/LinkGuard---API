@@ -90,6 +90,14 @@ extension LinkResultController {
 		return linkResultID
 	}
 
+	/// Deletes a specific `LinkResult` from the database.
+	/// - Parameters:
+	///   - id: The ID of the `LinkResult` to delete.
+	///   - req: The request context containing the database.
+	/// - Returns: A `HTTPResponseStatus.noContent` status on successful deletion.
+	/// - Throws: `.notFound` if the `LinkResult` is not found or an error if the delete fails.
+	/// - Note: This is a helper method used to encapsulate deletion logic, separating retrieval and deletion steps.
+	/// - Important: This function should only be called when you are certain the caller is authorized to delete the resource.
 	func delete(_ id: LinkResult.IDValue, on req: Request) async throws -> HTTPResponseStatus {
 		let linkResult = try await getLinkResult(id, on: req.db)
 
