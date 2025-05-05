@@ -15,7 +15,7 @@ final class LinkResult: Model, Content, @unchecked Sendable {
 	var id: UUID?
 
 	@Field(key: LinkResult.V20240207.statusCode)
-	var statusCode: String
+	var statusCode: Int
 
 	@Field(key: LinkResult.V20240207.isAccessible)
 	var isAccessible: Bool
@@ -26,13 +26,13 @@ final class LinkResult: Model, Content, @unchecked Sendable {
 	init() { }
 
 	init(id: UUID? = nil,
-		 statusCode: String,
-		 isAccessible: String,
+		 statusCode: Int,
+		 isAccessible: Bool,
 		 scanID: Scan.IDValue
 	) {
 		self.id = id
 		self.statusCode = statusCode
-		self.isAccessible = isAccessible.lowercased() == "true"
+		self.isAccessible = isAccessible
 		self.$scan.id = scanID
 	}
 }

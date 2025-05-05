@@ -26,6 +26,9 @@ final class Scan: Model, Content, @unchecked Sendable {
 	@OptionalParent(key: Scan.V20240207.userID)
 	var user: User?
 
+	@OptionalChild(for: \.$scan)
+	var linkResult: LinkResult?
+
 	init() { }
 
 	init(id: UUID? = nil,

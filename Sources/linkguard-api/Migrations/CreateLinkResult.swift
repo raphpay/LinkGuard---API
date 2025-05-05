@@ -12,7 +12,7 @@ struct CreateLinkResult: AsyncMigration {
 		try await database
 			.schema(LinkResult.V20240207.schemaName)
 			.id()
-			.field(LinkResult.V20240207.statusCode, .string, .required)
+			.field(LinkResult.V20240207.statusCode, .int16, .required)
 			.field(LinkResult.V20240207.isAccessible, .bool, .required)
 			.field(LinkResult.V20240207.scanID, .uuid, .required)
 			.create()
