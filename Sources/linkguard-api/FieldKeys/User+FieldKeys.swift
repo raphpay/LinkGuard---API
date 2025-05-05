@@ -12,7 +12,7 @@ extension User {
 		static let schemaName = "users"
 		static let id = FieldKey(stringLiteral: "id")
 		static let email = FieldKey(stringLiteral: "email")
-		static let password = FieldKey(stringLiteral: "password")
+		static let passwordHash = FieldKey(stringLiteral: "passwordHash")
 		static let frequency = FieldKey(stringLiteral: "frequency")
 		static let scans = FieldKey(stringLiteral: "scans")
 	}

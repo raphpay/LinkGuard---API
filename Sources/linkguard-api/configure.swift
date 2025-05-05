@@ -16,6 +16,9 @@ public func configure(_ app: Application) async throws {
 
     // register routes
     try routes(app)
+
+	// Print routes ( dev only )
+	// printRoutes(app)
 }
 
 func registerMigrations(_ app: Application) {
@@ -23,4 +26,15 @@ func registerMigrations(_ app: Application) {
 	app.migrations.add(CreateUser())
 	app.migrations.add(CreateScan())
 	app.migrations.add(CreateLinkResult())
+	app.migrations.add(CreateToken())
+}
+
+// TO BE REMOVED
+func printRoutes(_ app: Application) {
+	print("Registered Routes:")
+	for route in app.routes.all {
+		let method = route.method.rawValue
+		let path = route.path.map { $0.description }.joined(separator: "/")
+		print("[\(method)] /\(path)")
+	}
 }

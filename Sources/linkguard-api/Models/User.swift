@@ -17,22 +17,27 @@ final class User: Model, Content, @unchecked Sendable {
 	@Field(key: User.V20240207.email)
 	var email: String
 
-	@Field(key: User.V20240207.password)
-	var password: String
+	@Field(key: User.V20240207.passwordHash)
+	var passwordHash: String
 
 	@Field(key: User.V20240207.frequency)
-	var frequency: String
+	var frequency: Frequency
 
 	init() { }
 
 	init(id: UUID? = nil,
 		 email: String,
-		 password: String,
-		 frequency: String
+		 passwordHash: String,
+		 frequency: Frequency
 	) {
 		self.id = id
 		self.email = email
-		self.password = password
+		self.passwordHash = passwordHash
 		self.frequency = frequency
+	}
+
+	func toPublicOutput() throws -> User.PublicOutput {
+		let id = try self.requireID()
+		return .init(id: id, email: email, frequency: frequency)
 	}
 }

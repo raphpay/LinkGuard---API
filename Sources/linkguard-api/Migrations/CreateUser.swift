@@ -14,7 +14,7 @@ struct CreateUser: AsyncMigration {
 			.schema(User.V20240207.schemaName)
 			.id()
 			.field(User.V20240207.email, .string, .required)
-			.field(User.V20240207.password, .string, .required)
+			.field(User.V20240207.passwordHash, .string, .required)
 			.field(User.V20240207.frequency, .string, .required)
 			.create()
 	}
