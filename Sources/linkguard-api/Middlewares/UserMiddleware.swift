@@ -30,6 +30,10 @@ struct UserMiddleware {
 			throw Abort(.badRequest, reason: "badRequest.incorrectMailAddressFormat")
 		}
 
+		guard try await SubscriptionPlan.find(userInput.subscriptionPlanID, on: database) != nil else {
+			throw Abort(.badRequest, reason: "badRequest.inexistantSubscriptionPlan")
+		}
+
 		try await checkUserAvailability(email: userInput.email, on: database)
 	}
 
@@ -73,6 +77,12 @@ struct UserUpdateMiddleware {
 			}
 
 			try await UserMiddleware().checkUserAvailability(email: email, on: database)
+		}
+
+		if let subscriptionPlanID = userInput.subscriptionPlanID {
+			guard try await SubscriptionPlan.find(subscriptionPlanID, on: database) != nil else {
+				throw Abort(.badRequest, reason: "badRequest.inexistantSubscriptionPlan")
+			}
 		}
 	}
 }
