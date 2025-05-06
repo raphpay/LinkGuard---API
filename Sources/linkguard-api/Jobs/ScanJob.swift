@@ -17,7 +17,7 @@ struct ScanJob: AsyncScheduledJob {
 		for user in users {
 			if user.subscriptionStatus == .active {
 				let scans = try await user.$scans.get(on: context.application.db)
-				let now = Date()
+//				let now = Date()
 
 				for scan in scans {
 					guard let lastScan = scan.lastScan else {
@@ -27,20 +27,20 @@ struct ScanJob: AsyncScheduledJob {
 						continue
 					}
 
-					let shouldScan: Bool
-					switch user.frequency {
-					case .daily:
-						shouldScan = Calendar.current.dateComponents([.day], from: lastScan, to: now).day ?? 0 >= 1
-					case .weekly:
-						shouldScan = Calendar.current.dateComponents([.day], from: lastScan, to: now).day ?? 0 >= 7
-					case .monthly:
-						shouldScan = Calendar.current.dateComponents([.month], from: lastScan, to: now).month ?? 0 >= 1
-					}
+//					let shouldScan: Bool
+//					switch user.frequency {
+//					case .daily:
+//						shouldScan = Calendar.current.dateComponents([.day], from: lastScan, to: now).day ?? 0 >= 1
+//					case .weekly:
+//						shouldScan = Calendar.current.dateComponents([.day], from: lastScan, to: now).day ?? 0 >= 7
+//					case .monthly:
+//						shouldScan = Calendar.current.dateComponents([.month], from: lastScan, to: now).month ?? 0 >= 1
+//					}
 
-					if shouldScan {
+//					if shouldScan {
 						let req = Request(application: context.application, on: context.eventLoop)
 						try await ScanController.handleScan(scan.input, with: scan, on: req)
-					}
+//					}
 				}
 			}
 		}

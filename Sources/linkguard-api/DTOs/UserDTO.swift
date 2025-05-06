@@ -12,14 +12,14 @@ extension User {
 	struct Input: Content {
 		let email: String
 		let password: String
-		let frequency: Frequency
 		let subscriptionStatus: SubscriptionStatus
+		let subscriptionPlanID: SubscriptionPlan.IDValue
 
 		func toModel(with passwordHash: String) -> User {
 			.init(email: email,
 				  passwordHash: passwordHash,
-				  frequency: frequency,
-				  subscriptionStatus: subscriptionStatus
+				  subscriptionStatus: subscriptionStatus,
+				  subscriptionPlanID: subscriptionPlanID
 			)
 		}
 	}
@@ -28,8 +28,8 @@ extension User {
 extension User {
 	struct UpdateInput: Content {
 		var email: String?
-		var frequency: Frequency?
 		var subscriptionStatus: SubscriptionStatus?
+		var subscriptionPlanID: SubscriptionPlan.IDValue?
 
 		/// Updates the given `User` model by applying all non-nil fields from this `UpdateInput`.
 		///
@@ -44,8 +44,8 @@ extension User {
 			let updatedUser = user
 
 			applyIfPresent(email) { updatedUser.email = $0 }
-			applyIfPresent(frequency) { updatedUser.frequency = $0 }
 			applyIfPresent(subscriptionStatus) { updatedUser.subscriptionStatus = $0 }
+			applyIfPresent(subscriptionPlanID) { updatedUser.$subscriptionPlan.id = $0 }
 
 			return updatedUser
 		}
@@ -90,7 +90,7 @@ extension User {
 	struct PublicOutput: Content {
 		let id: UUID
 		let email: String
-		let frequency: Frequency
 		let subscriptionStatus: SubscriptionStatus
+		let subscriptionPlanID: SubscriptionPlan.IDValue
 	}
 }
