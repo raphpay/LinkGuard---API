@@ -154,7 +154,7 @@ extension ScanController {
 			statusCode = 0
 			isAccessible = false
 		}
-		scan.lastScan = .now
+		
 		try await scan.save(on: req.db)
 
 		let linkResult = LinkResult(statusCode: statusCode, isAccessible: isAccessible, scanID: try scan.requireID())

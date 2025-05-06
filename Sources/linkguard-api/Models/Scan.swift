@@ -20,9 +20,6 @@ final class Scan: Model, Content, @unchecked Sendable {
 	@Timestamp(key: Scan.V20250505.createdAt, on: .create)
 	var createdAt: Date?
 
-	@Timestamp(key: Scan.V20250505.lastScan, on : .none)
-	var lastScan: Date?
-
 	@OptionalField(key: Scan.V20250505.email)
 	var email: String?
 

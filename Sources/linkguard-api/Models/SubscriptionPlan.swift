@@ -24,7 +24,7 @@ final class SubscriptionPlan: Model, Content, @unchecked Sendable {
 	var maxUrls: Int
 
 	@Field(key: SubscriptionPlan.V20250505.scanFrequency)
-	var scanfrequency: ScanFrequency
+	var scanFrequency: ScanFrequency
 
 	@Children(for: \.$subscriptionPlan)
 	var users: [User]
@@ -41,6 +41,6 @@ final class SubscriptionPlan: Model, Content, @unchecked Sendable {
 		self.name = name
 		self.price = price
 		self.maxUrls = maxUrls
-		self.scanfrequency = scanFrequency
+		self.scanFrequency = scanFrequency
 	}
 }

@@ -43,7 +43,7 @@ extension SubscriptionPlan {
 			applyIfPresent(name) { subscriptionPlan.name = $0 }
 			applyIfPresent(price) { subscriptionPlan.price = $0 }
 			applyIfPresent(maxUrls) { subscriptionPlan.maxUrls = $0 }
-			applyIfPresent(scanFrequency) { subscriptionPlan.scanfrequency = $0 }
+			applyIfPresent(scanFrequency) { subscriptionPlan.scanFrequency = $0 }
 
 			return updatedSubscriptionPlan
 		}

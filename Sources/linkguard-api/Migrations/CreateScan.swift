@@ -18,7 +18,6 @@ struct CreateScan: AsyncMigration {
 			.field(Scan.V20250505.createdAt, .datetime, .required)
 			.field(Scan.V20250505.email, .string)
 			.field(Scan.V20250505.userID, .uuid)
-			.field(Scan.V20250505.lastScan, .datetime, .required)
 			.create()
 	}
 
