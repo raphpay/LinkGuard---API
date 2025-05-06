@@ -95,6 +95,11 @@ struct ScanController: RouteCollection {
 	/// - Important: This function should be called with caution and should only be used by administrators.
 	@Sendable
 	func getScanByID(req: Request) async throws -> Scan {
+		let authUser = try req.auth.require(User.self)
+		guard authUser.isAdmin else {
+			throw Abort(.unauthorized, reason: "unauthorized.role")
+		}
+
 		guard let scan = try await Scan.find(req.parameters.get("scanID"), on: req.db) else {
 			throw Abort(.notFound, reason: "notFound.scan")
 		}
@@ -108,6 +113,11 @@ struct ScanController: RouteCollection {
 	/// - Throws: `.notFound` if the scan is not found, or any database deletion error.
 	@Sendable
 	func removeByID(req: Request) async throws -> HTTPResponseStatus {
+		let authUser = try req.auth.require(User.self)
+		guard authUser.isAdmin else {
+			throw Abort(.unauthorized, reason: "unauthorized.role")
+		}
+		
 		let scanID = try await getScanID(on: req)
 		let scan = try await getScan(scanID, on: req.db)
 

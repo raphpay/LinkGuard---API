@@ -14,11 +14,13 @@ extension User {
 		let password: String
 		let subscriptionStatus: SubscriptionStatus
 		let subscriptionPlanID: SubscriptionPlan.IDValue
+		let role: Role
 
 		func toModel(with passwordHash: String) -> User {
 			.init(email: email,
 				  passwordHash: passwordHash,
 				  subscriptionStatus: subscriptionStatus,
+				  role: role,
 				  subscriptionPlanID: subscriptionPlanID
 			)
 		}
@@ -91,6 +93,7 @@ extension User {
 		let id: UUID
 		let email: String
 		let subscriptionStatus: SubscriptionStatus
+		let role: Role
 		let subscriptionPlanID: SubscriptionPlan.IDValue
 	}
 }

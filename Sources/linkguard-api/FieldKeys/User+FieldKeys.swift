@@ -16,5 +16,6 @@ extension User {
 		static let scans = FieldKey(stringLiteral: "scans")
 		static let subscriptionStatus = FieldKey(stringLiteral: "subscriptionStatus")
 		static let subscriptionPlanID = FieldKey(stringLiteral: "subscriptionPlanID")
+		static let role = FieldKey(stringLiteral: "role")
 	}
 }

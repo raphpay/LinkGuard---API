@@ -21,6 +21,10 @@ extension User {
 		case canceled       // User or system canceled subscription
 		case expired        // Subscription ended, no auto-renew
 	}
+
+	enum Role: String, Codable {
+		case admin, user
+	}
 }
 
 extension User: ModelAuthenticatable {
@@ -34,5 +38,11 @@ extension User: ModelAuthenticatable {
 
 	func verify(password: String) throws -> Bool {
 		try Bcrypt.verify(password, created: self.passwordHash)
+	}
+}
+
+extension User {
+	var isAdmin: Bool {
+		self.role == .admin
 	}
 }
