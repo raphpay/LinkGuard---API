@@ -39,17 +39,25 @@ struct ScanController: RouteCollection {
 	/// - Returns: A newly created `Scan` instance.
 	/// - Throws: `.badRequest` if the email is invalid or if saving or scanning fails.
 	@Sendable
-	func createWithoutAccount(req: Request) async throws -> Scan {
+	func createWithoutAccount(req: Request) async throws -> Scan.Output {
 		let input = try req.content.decode(Scan.InputWithoutAccount.self)
-		let scan = input.toModel()
 
 		guard input.email.isValidEmail() else {
 			throw Abort(.badRequest, reason: "badRequest.invalidEmail")
 		}
 
-		try await ScanController.handleScan(input.input, with: scan, on: req)
+		let existingScanCount = try await Scan.query(on: req.db)
+			.filter(\.$email == input.email)
+			.count()
 
-		return scan
+		guard existingScanCount == 0 else {
+			throw Abort(.forbidden, reason: "forbidden.quotaReached")
+		}
+
+		let scan = input.toModel()
+		let linkResult = try await ScanController.handleScan(scan, on: req)
+
+		return try scan.toOutput(result: linkResult)
 	}
 
 	/// Creates a new scan for an authenticated user.
@@ -57,13 +65,25 @@ struct ScanController: RouteCollection {
 	/// - Returns: The created `Scan` instance.
 	/// - Throws: An error if saving or scanning fails.
 	@Sendable
-	func create(req: Request) async throws -> Scan {
+	func create(req: Request) async throws -> Scan.Output {
+		let authUser = try req.auth.require(User.self)
 		let input = try req.content.decode(Scan.Input.self)
 		let scan = input.toModel()
+		let plan = try await authUser.$subscriptionPlan.get(on: req.db)
+		let scans = try await authUser.$scans.get(on: req.db)
+		var usersScans = scans
+		usersScans.append(scan)
 
-		try await ScanController.handleScan(input.input, with: scan, on: req)
+		var linkResult = LinkResult(statusCode: 0, isAccessible: false, scanID: UUID())
 
-		return scan
+		let canScan = try await ScanController.checkQuota(with: plan, and: usersScans, on: req)
+		if canScan {
+			linkResult = try await ScanController.handleScan(scan, on: req)
+		} else {
+			throw Abort(.forbidden, reason: "forbidden.quotaReached")
+		}
+
+		return try scan.toOutput(result: linkResult)
 	}
 
 	// MARK: - READ
@@ -133,20 +153,30 @@ extension ScanController {
 }
 
 extension ScanController {
+	static func checkQuota(with plan: SubscriptionPlan, and scans: [Scan], on req: Request) async throws -> Bool {
+		// Check quota
+		if scans.count >= plan.maxUrls {
+      // User has reach their scan quota
+			return false
+		}
+
+		return true
+	}
+
 	/// Performs a link scan and stores the result.
 	/// - Parameters:
 	///   - input: The URL to scan.
 	///   - scan: The associated `Scan` object.
 	///   - req: The current request context with access to the HTTP client and database.
 	/// - Throws: An error if saving the `LinkResult` fails.
-	static func handleScan(_ input: String, with scan: Scan, on req: Request) async throws {
+	static func handleScan(_ scan: Scan, on req: Request) async throws -> LinkResult {
 		let client = req.client
 
 		var statusCode: Int = 0
 		var isAccessible = false
 
 		do {
-			let response = try await client.get(URI(string: input))
+			let response = try await client.get(URI(string: scan.input))
 			statusCode = Int(response.status.code)
 			isAccessible = (200..<400).contains(statusCode)
 		} catch {
@@ -154,11 +184,31 @@ extension ScanController {
 			statusCode = 0
 			isAccessible = false
 		}
-		
+
 		try await scan.save(on: req.db)
 
 		let linkResult = LinkResult(statusCode: statusCode, isAccessible: isAccessible, scanID: try scan.requireID())
 
 		try await linkResult.save(on: req.db)
+
+		return linkResult
+	}
+
+	static func filterRecentScans(with scans: [Scan], and plan: SubscriptionPlan) -> [Scan] {
+		// Filter scans within the plan's frequency
+		scans.filter { scan in
+			guard let scanDate = scan.createdAt else { return false }
+			switch plan.scanFrequency {
+			case .daily:
+				// Only include scans from today
+				return Calendar.current.isDateInToday(scanDate)
+			case .weekly:
+				// If last scan was within 7 days, allow it
+				return Calendar.current.dateComponents([.day], from: scanDate, to: .now).day ?? 0 < 7
+			case .monthly:
+				// If last scan was within 1 month, allow it
+				return Calendar.current.dateComponents([.month], from: scanDate, to: .now).month ?? 0 < 1
+			}
+		}
 	}
 }

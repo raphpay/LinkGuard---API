@@ -41,4 +41,8 @@ final class Scan: Model, Content, @unchecked Sendable {
 		self.email = email
 		self.$user.id = userID
 	}
+
+	func toOutput(result: LinkResult) throws -> Scan.Output {
+		return .init(id: id, input: input, email: email, userID: try user?.requireID() ?? nil, linkResult: result)
+	}
 }
