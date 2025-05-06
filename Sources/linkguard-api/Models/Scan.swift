@@ -9,21 +9,24 @@ import Fluent
 import Vapor
 
 final class Scan: Model, Content, @unchecked Sendable {
-	static let schema = Scan.V20240207.schemaName
+	static let schema = Scan.V20250505.schemaName
 
 	@ID(key: .id)
 	var id: UUID?
 
-	@Field(key: Scan.V20240207.input)
+	@Field(key: Scan.V20250505.input)
 	var input: String
 
-	@Timestamp(key: Scan.V20240207.createdAt, on: .create)
+	@Timestamp(key: Scan.V20250505.createdAt, on: .create)
 	var createdAt: Date?
 
-	@OptionalField(key: Scan.V20240207.email)
+	@Timestamp(key: Scan.V20250505.lastScan, on : .none)
+	var lastScan: Date?
+
+	@OptionalField(key: Scan.V20250505.email)
 	var email: String?
 
-	@OptionalParent(key: Scan.V20240207.userID)
+	@OptionalParent(key: Scan.V20250505.userID)
 	var user: User?
 
 	@OptionalChild(for: \.$scan)

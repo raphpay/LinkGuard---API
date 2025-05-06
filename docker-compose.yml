@@ -43,6 +43,8 @@ services:
     image: linkguard-api:latest
     build:
       context: .
+    env_file:
+      - .env.development
     environment:
       <<: *shared_environment
     env_file:

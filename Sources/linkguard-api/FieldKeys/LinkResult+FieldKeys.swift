@@ -8,7 +8,7 @@
 import Fluent
 
 extension LinkResult {
-	enum V20240207 {
+	enum V20250505 {
 		static let schemaName = "linkResults"
 		static let id = FieldKey(stringLiteral: "id")
 		static let statusCode = FieldKey(stringLiteral: "statusCode")

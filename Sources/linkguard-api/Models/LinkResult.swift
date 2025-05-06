@@ -9,18 +9,18 @@ import Fluent
 import Vapor
 
 final class LinkResult: Model, Content, @unchecked Sendable {
-	static let schema = LinkResult.V20240207.schemaName
+	static let schema = LinkResult.V20250505.schemaName
 
 	@ID(key: .id)
 	var id: UUID?
 
-	@Field(key: LinkResult.V20240207.statusCode)
+	@Field(key: LinkResult.V20250505.statusCode)
 	var statusCode: Int
 
-	@Field(key: LinkResult.V20240207.isAccessible)
+	@Field(key: LinkResult.V20250505.isAccessible)
 	var isAccessible: Bool
 
-	@Parent(key: LinkResult.V20240207.scanID)
+	@Parent(key: LinkResult.V20250505.scanID)
 	var scan: Scan
 
 	init() { }

@@ -10,17 +10,17 @@ import Fluent
 struct CreateLinkResult: AsyncMigration {
 	func prepare(on database: any Database) async throws {
 		try await database
-			.schema(LinkResult.V20240207.schemaName)
+			.schema(LinkResult.V20250505.schemaName)
 			.id()
-			.field(LinkResult.V20240207.statusCode, .int16, .required)
-			.field(LinkResult.V20240207.isAccessible, .bool, .required)
-			.field(LinkResult.V20240207.scanID, .uuid, .required)
+			.field(LinkResult.V20250505.statusCode, .int16, .required)
+			.field(LinkResult.V20250505.isAccessible, .bool, .required)
+			.field(LinkResult.V20250505.scanID, .uuid, .required)
 			.create()
 	}
 
 	func revert(on database: any Database) async throws {
 		try await database
-			.schema(LinkResult.V20240207.schemaName)
+			.schema(LinkResult.V20250505.schemaName)
 			.delete()
 	}
 }
