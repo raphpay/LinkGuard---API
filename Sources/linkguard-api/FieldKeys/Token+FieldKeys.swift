@@ -8,7 +8,7 @@
 import Fluent
 
 extension Token {
-	enum V20240207 {
+	enum V20250505 {
 		static let schemaName = "tokens"
 
 		static let id = FieldKey(stringLiteral: "id")

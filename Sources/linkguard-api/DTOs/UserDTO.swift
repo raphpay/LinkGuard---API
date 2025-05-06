@@ -10,14 +10,17 @@ import Vapor
 
 extension User {
 	struct Input: Content {
-		var email: String
-		var password: String
-		var frequency: Frequency
+		let email: String
+		let password: String
+		let frequency: Frequency
+		let subscriptionStatus: SubscriptionStatus
 
 		func toModel(with passwordHash: String) -> User {
 			.init(email: email,
 				  passwordHash: passwordHash,
-				  frequency: frequency)
+				  frequency: frequency,
+				  subscriptionStatus: subscriptionStatus
+			)
 		}
 	}
 }
@@ -26,6 +29,7 @@ extension User {
 	struct UpdateInput: Content {
 		var email: String?
 		var frequency: Frequency?
+		var subscriptionStatus: SubscriptionStatus?
 
 		/// Updates the given `User` model by applying all non-nil fields from this `UpdateInput`.
 		///
@@ -41,6 +45,7 @@ extension User {
 
 			applyIfPresent(email) { updatedUser.email = $0 }
 			applyIfPresent(frequency) { updatedUser.frequency = $0 }
+			applyIfPresent(subscriptionStatus) { updatedUser.subscriptionStatus = $0 }
 
 			return updatedUser
 		}
@@ -86,5 +91,6 @@ extension User {
 		let id: UUID
 		let email: String
 		let frequency: Frequency
+		let subscriptionStatus: SubscriptionStatus
 	}
 }

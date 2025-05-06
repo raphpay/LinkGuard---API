@@ -47,9 +47,7 @@ struct ScanController: RouteCollection {
 			throw Abort(.badRequest, reason: "badRequest.invalidEmail")
 		}
 
-		try await scan.save(on: req.db)
-		let scanID = try scan.requireID()
-		try await handleScan(input.input, with: scanID, on: req)
+		try await ScanController.handleScan(input.input, with: scan, on: req)
 
 		return scan
 	}
@@ -63,9 +61,7 @@ struct ScanController: RouteCollection {
 		let input = try req.content.decode(Scan.Input.self)
 		let scan = input.toModel()
 
-		try await scan.save(on: req.db)
-		let scanID = try scan.requireID()
-		try await handleScan(input.input, with: scanID, on: req)
+		try await ScanController.handleScan(input.input, with: scan, on: req)
 
 		return scan
 	}
@@ -140,10 +136,10 @@ extension ScanController {
 	/// Performs a link scan and stores the result.
 	/// - Parameters:
 	///   - input: The URL to scan.
-	///   - scanID: The associated `Scan` ID.
+	///   - scan: The associated `Scan` object.
 	///   - req: The current request context with access to the HTTP client and database.
 	/// - Throws: An error if saving the `LinkResult` fails.
-	private func handleScan(_ input: String, with scanID: Scan.IDValue, on req: Request) async throws {
+	static func handleScan(_ input: String, with scan: Scan, on req: Request) async throws {
 		let client = req.client
 
 		var statusCode: Int = 0
@@ -158,8 +154,11 @@ extension ScanController {
 			statusCode = 0
 			isAccessible = false
 		}
+		scan.lastScan = .now
+		try await scan.save(on: req.db)
 
-		let linkResult = LinkResult(statusCode: statusCode, isAccessible: isAccessible, scanID: scanID)
+		let linkResult = LinkResult(statusCode: statusCode, isAccessible: isAccessible, scanID: try scan.requireID())
+
 		try await linkResult.save(on: req.db)
 	}
 }

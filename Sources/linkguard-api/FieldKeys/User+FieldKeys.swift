@@ -8,12 +8,13 @@
 import Fluent
 
 extension User {
-	enum V20240207 {
+	enum V20250505 {
 		static let schemaName = "users"
 		static let id = FieldKey(stringLiteral: "id")
 		static let email = FieldKey(stringLiteral: "email")
 		static let passwordHash = FieldKey(stringLiteral: "passwordHash")
 		static let frequency = FieldKey(stringLiteral: "frequency")
 		static let scans = FieldKey(stringLiteral: "scans")
+		static let subscriptionStatus = FieldKey(stringLiteral: "subscriptionStatus")
 	}
 }
