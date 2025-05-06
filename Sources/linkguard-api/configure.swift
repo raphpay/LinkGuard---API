@@ -10,8 +10,8 @@ public func configure(_ app: Application) async throws {
 	let dbURL = Environment.get("DATABASE_URL") ?? "mongodb://localhost:27017/linkguard"
 	try app.databases.use(.mongo(connectionString: dbURL), as: .mongo)
 
-	// uncomment to serve files from /Public folder
-	// app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
+	// register middlewares
+	registerMiddlewares(app)
 
 	// register migrations
 	registerMigrations(app)
@@ -23,6 +23,24 @@ public func configure(_ app: Application) async throws {
 	if Environment.get("APP_ENV") == "development" {
 		printRoutes(app)
 	}
+}
+
+func registerMiddlewares(_ app: Application) {
+	// uncomment to serve files from /Public folder
+	// app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
+
+	let corsConfiguration = CORSMiddleware.Configuration(
+		allowedOrigin: .all,
+		allowedMethods: [.GET, .POST, .PUT, .OPTIONS, .DELETE, .PATCH],
+		allowedHeaders: [
+			.accept, .authorization, .contentType, .origin, .xRequestedWith, .userAgent, .accessControlAllowOrigin,
+			"Access-Control-Allow-Origin", "fileName", "filePath", "Authorization", "Content-Type"
+		],
+		exposedHeaders: ["Content-Disposition"]
+	)
+	let cors = CORSMiddleware(configuration: corsConfiguration)
+	// cors middleware should come before default error middleware using `at: .beginning`
+	app.middleware.use(cors, at: .beginning)
 }
 
 func registerMigrations(_ app: Application) {
