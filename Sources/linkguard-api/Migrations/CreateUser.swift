@@ -15,8 +15,9 @@ struct CreateUser: AsyncMigration {
 			.id()
 			.field(User.V20250505.email, .string, .required)
 			.field(User.V20250505.passwordHash, .string, .required)
-			.field(User.V20250505.frequency, .string, .required)
 			.field(User.V20250505.subscriptionStatus, .string, .required)
+			.field(User.V20250505.subscriptionPlanID, .uuid, .required,
+				.references(SubscriptionPlan.V20250505.schemaName, SubscriptionPlan.V20250505.id))
 			.create()
 	}
 

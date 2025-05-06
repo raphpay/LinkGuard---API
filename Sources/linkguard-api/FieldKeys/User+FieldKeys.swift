@@ -13,8 +13,8 @@ extension User {
 		static let id = FieldKey(stringLiteral: "id")
 		static let email = FieldKey(stringLiteral: "email")
 		static let passwordHash = FieldKey(stringLiteral: "passwordHash")
-		static let frequency = FieldKey(stringLiteral: "frequency")
 		static let scans = FieldKey(stringLiteral: "scans")
 		static let subscriptionStatus = FieldKey(stringLiteral: "subscriptionStatus")
+		static let subscriptionPlanID = FieldKey(stringLiteral: "subscriptionPlanID")
 	}
 }

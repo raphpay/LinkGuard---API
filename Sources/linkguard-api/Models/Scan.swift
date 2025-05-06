@@ -20,9 +20,6 @@ final class Scan: Model, Content, @unchecked Sendable {
 	@Timestamp(key: Scan.V20250505.createdAt, on: .create)
 	var createdAt: Date?
 
-	@Timestamp(key: Scan.V20250505.lastScan, on : .none)
-	var lastScan: Date?
-
 	@OptionalField(key: Scan.V20250505.email)
 	var email: String?
 
@@ -43,5 +40,9 @@ final class Scan: Model, Content, @unchecked Sendable {
 		self.input = input
 		self.email = email
 		self.$user.id = userID
+	}
+
+	func toOutput(result: LinkResult) throws -> Scan.Output {
+		return .init(id: id, input: input, email: email, userID: try user?.requireID() ?? nil, linkResult: result)
 	}
 }

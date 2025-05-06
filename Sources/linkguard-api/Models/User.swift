@@ -20,35 +20,36 @@ final class User: Model, Content, @unchecked Sendable {
 	@Field(key: User.V20250505.passwordHash)
 	var passwordHash: String
 
-	@Field(key: User.V20250505.frequency)
-	var frequency: Frequency
-
 	@Field(key: User.V20250505.subscriptionStatus)
 	var subscriptionStatus: SubscriptionStatus
 
 	@Children(for: \.$user)
 	var scans: [Scan]
 
+	@Parent(key: User.V20250505.subscriptionPlanID)
+	var subscriptionPlan: SubscriptionPlan
+
 	init() { }
 
 	init(id: UUID? = nil,
 		 email: String,
 		 passwordHash: String,
-		 frequency: Frequency,
-		 subscriptionStatus: SubscriptionStatus
+		 subscriptionStatus: SubscriptionStatus,
+		 subscriptionPlanID: SubscriptionPlan.IDValue
 	) {
 		self.id = id
 		self.email = email
 		self.passwordHash = passwordHash
-		self.frequency = frequency
 		self.subscriptionStatus = subscriptionStatus
+		self.$subscriptionPlan.id = subscriptionPlanID
 	}
 
 	func toPublicOutput() throws -> User.PublicOutput {
 		let id = try self.requireID()
 		return .init(id: id,
 					 email: email,
-					 frequency: frequency,
-					 subscriptionStatus: subscriptionStatus)
+					 subscriptionStatus: subscriptionStatus,
+					 subscriptionPlanID: self.$subscriptionPlan.id
+		)
 	}
 }

@@ -27,3 +27,13 @@ extension Scan {
 		}
 	}
 }
+
+extension Scan {
+	struct Output: Content {
+		let id: UUID?
+		let input: String
+		let email: String?
+		let userID: User.IDValue?
+		let linkResult: LinkResult
+	}
+}
