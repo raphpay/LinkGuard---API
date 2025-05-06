@@ -58,6 +58,11 @@ extension SubscriptionPlanController {
 	///        It also hashes the password before saving it to the database.
 	@Sendable
 	func create(req: Request) async throws -> SubscriptionPlan {
+		let authUser = try req.auth.require(User.self)
+		guard authUser.isAdmin else {
+			throw Abort(.unauthorized, reason: "unauthorized.role")
+		}
+
 		let input = try req.content.decode(SubscriptionPlan.Input.self)
 		let output = input.toModel()
 		try await output.save(on: req.db)
@@ -102,6 +107,11 @@ extension SubscriptionPlanController {
 	///     If the user does not have the required role to perform the update, it throws an `unauthorized` error.
 	@Sendable
 	func update(req: Request) async throws -> SubscriptionPlan {
+		let authUser = try req.auth.require(User.self)
+		guard authUser.isAdmin else {
+			throw Abort(.unauthorized, reason: "unauthorized.role")
+		}
+		
 		let subscriptionPlanID = try await getSubscriptionPlanID(on: req)
 		let subscriptionPlan = try await getSubscriptionPlan(subscriptionPlanID, on: req)
 		var updatedSubscriptionPlan = subscriptionPlan

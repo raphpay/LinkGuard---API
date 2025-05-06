@@ -33,6 +33,11 @@ struct LinkResultController: RouteCollection {
 	/// - Important: This function should be called with caution and should only be used by administrators.
 	@Sendable
 	func getByID(req: Request) async throws -> LinkResult {
+		let authUser = try req.auth.require(User.self)
+		guard authUser.isAdmin else {
+			throw Abort(.unauthorized, reason: "unauthorized.role")
+		}
+
 		guard let linkResult = try await LinkResult.find(req.parameters.get("linkResultID"), on: req.db) else {
 			throw Abort(.notFound, reason: "notFound.linkResult")
 		}
@@ -54,6 +59,11 @@ struct LinkResultController: RouteCollection {
 	///     Use this function only if you want to delete a specific linkResult.
 	@Sendable
 	func removeByID(req: Request) async throws -> HTTPResponseStatus {
+		let authUser = try req.auth.require(User.self)
+		guard authUser.isAdmin else {
+			throw Abort(.unauthorized, reason: "unauthorized.role")
+		}
+		
 		let linkResultID = try await getLinkResultID(on: req)
 
 		return try await delete(linkResultID, on: req)

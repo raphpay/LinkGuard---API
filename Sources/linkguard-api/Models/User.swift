@@ -23,6 +23,9 @@ final class User: Model, Content, @unchecked Sendable {
 	@Field(key: User.V20250505.subscriptionStatus)
 	var subscriptionStatus: SubscriptionStatus
 
+	@Field(key: User.V20250505.role)
+	var role: Role
+
 	@Children(for: \.$user)
 	var scans: [Scan]
 
@@ -35,12 +38,14 @@ final class User: Model, Content, @unchecked Sendable {
 		 email: String,
 		 passwordHash: String,
 		 subscriptionStatus: SubscriptionStatus,
+		 role: Role,
 		 subscriptionPlanID: SubscriptionPlan.IDValue
 	) {
 		self.id = id
 		self.email = email
 		self.passwordHash = passwordHash
 		self.subscriptionStatus = subscriptionStatus
+		self.role = role
 		self.$subscriptionPlan.id = subscriptionPlanID
 	}
 
@@ -49,6 +54,7 @@ final class User: Model, Content, @unchecked Sendable {
 		return .init(id: id,
 					 email: email,
 					 subscriptionStatus: subscriptionStatus,
+					 role: role,
 					 subscriptionPlanID: self.$subscriptionPlan.id
 		)
 	}

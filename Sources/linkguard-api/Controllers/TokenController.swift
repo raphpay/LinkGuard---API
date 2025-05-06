@@ -9,8 +9,6 @@ import Fluent
 import Vapor
 
 struct TokenController: RouteCollection {
-	let logger = Logger(label: "info")
-
 	func boot(routes: any RoutesBuilder) throws {
 		// Group routes under "/api" and apply APIKeyCheckMiddleware for authentication
 		let tokens = routes.grouped("api", "tokens")
@@ -38,10 +36,6 @@ struct TokenController: RouteCollection {
 
 		// DELETE: Remove a specific token
 		tokenAuthGroup.delete(":remove", "tokenID", use: removeByID)
-
-		// DELETE: Remove all tokens
-		tokenAuthGroup.delete("all", use: removeAll)
-
 	}
 
 	// MARK: - READ
@@ -53,6 +47,11 @@ struct TokenController: RouteCollection {
 	/// - Important: This function should be called with caution and should only be used by administrators.
 	@Sendable
 	func getTokens(req: Request) async throws -> [Token.Output] {
+		let authUser = try req.auth.require(User.self)
+		guard authUser.isAdmin else {
+			throw Abort(.unauthorized, reason: "unauthorized.role")
+		}
+
 		var tokenOutputs: [Token.Output] = []
 		let tokens = try await Token.query(on: req.db).all()
 		for token in tokens {
@@ -72,6 +71,11 @@ struct TokenController: RouteCollection {
 	/// - Important: This function should be called with caution and should only be used by administrators.
 	@Sendable
 	func getTokenByID(req: Request) async throws -> Token.Output {
+		let authUser = try req.auth.require(User.self)
+		guard authUser.isAdmin else {
+			throw Abort(.unauthorized, reason: "unauthorized.role")
+		}
+
 		guard let token = try await Token.find(req.parameters.get("tokenID"), on: req.db) else {
 			throw Abort(.notFound, reason: "notFound.token")
 		}
@@ -97,7 +101,6 @@ struct TokenController: RouteCollection {
 	///     The function returns the generated token.
 	@Sendable
 	func login(req: Request) async throws -> Token {
-		logger.info("login")
 		// 1. Extract credentials from the Authorization header (Basic Auth)
 		let credentials = try decodeBasicAuth(req.headers)
 
@@ -143,28 +146,15 @@ struct TokenController: RouteCollection {
 	///     Use this function only if you want to delete a specific token.
 	@Sendable
 	func removeByID(req: Request) async throws -> HTTPResponseStatus {
+		let authUser = try req.auth.require(User.self)
+		guard authUser.isAdmin else {
+			throw Abort(.unauthorized, reason: "unauthorized.role")
+		}
+
 		let tokenID = try await getTokenID(on: req)
 		let token = try await getToken(tokenID, on: req.db)
 
 		try await token.delete(force: true, on: req.db)
-
-		return .noContent
-	}
-
-	/// Remove all tokens
-	/// - Parameter req: The incoming request containing the database connection.
-	/// - Returns: An `HTTPResponseStatus` indicating that no content is being returned (204 No Content).
-	/// - Throws: An error if the database deletion fails.
-	/// - Note: This function retrieves all tokens from the database and deletes them one by one.
-	///     If the database deletion fails, it throws an error.
-	/// - Important: This function should be called with caution and should only be used by administrators.
-	///     It ensures that all tokens are deleted from the database.
-	///     Use this function only if you want to delete all tokens.
-	@Sendable
-	func removeAll(req: Request) async throws -> HTTPResponseStatus {
-		try await Token.query(on: req.db)
-			.all()
-			.delete(force: true, on: req.db)
 
 		return .noContent
 	}
@@ -248,7 +238,6 @@ extension TokenController {
 		// Return the username (email) and password
 		let mailAddress = String(components[0])
 		let password = String(components[1])
-		logger.info("password \(password)")
 
 		return (mailAddress, password)
 	}
