@@ -37,6 +37,9 @@ extension UserController {
 
 		// GET: Retrieve a specific user by ID
 		tokenAuthGroup.get(":userID", use: getUser)
+
+		// GET: Retrieve the scans of a user by ID
+		tokenAuthGroup.get("scans", ":userID", use: getUserScans)
 	}
 
 	private func registerUpdateRoutes(_ routes: any RoutesBuilder) throws {
@@ -92,6 +95,28 @@ extension UserController {
 		let userID = try await getUserID(on: req)
 		let user = try await getUser(userID, on: req)
 		return try user.toPublicOutput()
+	}
+
+	/// Retrieve the scans of a specific user by ID
+	/// - Parameter req: The incoming request containing the user ID.
+	/// - Returns: A `[Scan]` object representing the retrieved scans.
+	/// - Throws: An error if the user cannot be found or if the database query fails.
+	@Sendable
+	func getUserScans(req: Request) async throws -> [Scan.Output] {
+		let userID = try await getUserID(on: req)
+		let user = try await getUser(userID, on: req)
+		let scans = try await user.$scans.get(on: req.db)
+		var scanOutputs = [Scan.Output]()
+		for scan in scans {
+			guard let linkResult = try await scan.$linkResult.get(on: req.db) else {
+				throw Abort(.notFound, reason: "notFound.linkResult")
+			}
+
+			let scanOutput = try scan.toOutput(result: linkResult)
+			scanOutputs.append(scanOutput)
+		}
+
+		return scanOutputs
 	}
 
 
