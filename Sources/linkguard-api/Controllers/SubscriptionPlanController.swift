@@ -28,12 +28,12 @@ extension SubscriptionPlanController {
 	}
 
 	private func registerGetRoutes(_ routes: any RoutesBuilder) throws {
+		// GET: Retrieve all subscription plans
+		routes.get(use: getAll)
+
 		let tokenAuthMiddleware = Token.authenticator()
 		let guardAuthMiddleware = User.guardMiddleware()
 		let tokenAuthGroup = routes.grouped(tokenAuthMiddleware, guardAuthMiddleware)
-
-		// GET: Retrieve all users
-		tokenAuthGroup.get(use: getAll)
 
 		// GET: Retrieve a specific user by ID
 		tokenAuthGroup.get(":subscriptionPlanID", use: getByID)
