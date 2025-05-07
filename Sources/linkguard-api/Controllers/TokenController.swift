@@ -101,18 +101,7 @@ struct TokenController: RouteCollection {
 	///     The function returns the generated token.
 	@Sendable
 	func login(req: Request) async throws -> Token {
-		// 1. Extract credentials from the Authorization header (Basic Auth)
-		let credentials = try decodeBasicAuth(req.headers)
-
-		// Fetch the user based on the email address
-		guard let user = try await User.query(on: req.db)
-			.filter(\.$email == credentials.mailAddress)
-			.first() else {
-				throw Abort(.notFound, reason: "notFound.user")
-		}
-
-		let newToken = try await verifyPassword(credentials: credentials, user: user, on: req)
-		return newToken
+		try await loginToAccount(on: req)
 	}
 
 	/// Logout a user and delete the token
@@ -173,6 +162,21 @@ extension TokenController {
 			throw Abort(.notFound, reason: "notFound.token")
 		}
 		return token
+	}
+
+	func loginToAccount(on req: Request) async throws -> Token {
+		// 1. Extract credentials from the Authorization header (Basic Auth)
+		let credentials = try decodeBasicAuth(req.headers)
+
+		// Fetch the user based on the email address
+		guard let user = try await User.query(on: req.db)
+			.filter(\.$email == credentials.mailAddress)
+			.first() else {
+				throw Abort(.notFound, reason: "notFound.user")
+		}
+
+		let newToken = try await verifyPassword(credentials: credentials, user: user, on: req)
+		return newToken
 	}
 
 	/// Get the token ID from the request parameters.
