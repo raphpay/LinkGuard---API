@@ -3,6 +3,7 @@ import Fluent
 import FluentMongoDriver
 import Queues
 import QueuesRedisDriver
+import Smtp
 
 // configures your application
 public func configure(_ app: Application) async throws {
@@ -23,6 +24,9 @@ public func configure(_ app: Application) async throws {
 	if Environment.get("APP_ENV") == "development" {
 		printRoutes(app)
 	}
+
+  // register smtp connection ( brevo )
+	registerSmtpConnection(app)
 }
 
 func registerMiddlewares(_ app: Application) {
@@ -68,6 +72,20 @@ func registerJobs(_ app: Application) throws {
 
 	// Start scheduled jobs
 	try app.queues.startScheduledJobs()
+}
+
+func registerSmtpConnection(_ app: Application) {
+	guard let hostname = Environment.get("BREVO_HOSTNAME"),
+		  let port = Environment.get("BREVO_PORT"),
+		  let username = Environment.get("BREVO_USERNAME"),
+		  let password = Environment.get("BREVO_PASSWORD") else {
+		app.logger.info("Unable to configure Brevo SMTP connection. Missing required environment variables.")
+		return
+	}
+	app.smtp.configuration.hostname = hostname
+	app.smtp.configuration.port = Int(port) ?? 567
+	app.smtp.configuration.signInMethod = .credentials(username: username, password: password)
+	app.smtp.configuration.secure = .startTls
 }
 
 // DEV ONLY
