@@ -49,40 +49,11 @@ struct ScanJob: AsyncScheduledJob {
 					}
 				}
 
-				let htmlContent = generateEmailReport(for: recentScans, user: user)
-				try await sendEmailReport(to: user.email, user: user, with: htmlContent, on: req)
+				let htmlContent = EmailService.generateEmailReport(for: recentScans, user: user)
+				try await EmailService.sendEmailReport(to: user.email, with: htmlContent, on: req)
 			}
 		}
 
 		context.logger.info("ScanJob executed with success.")
-	}
-
-	private func generateEmailReport(for scans: [Scan], user: User) -> String {
-		let inaccessibleScans = scans.filter { $0.linkResult?.isAccessible == false }
-
-		return """
-		<h2>Rapport de scan pour \(user.email)</h2>
-		<p>Total des scans : \(scans.count)</p>
-		<p>Inaccessibles : \(inaccessibleScans.count)</p>
-		<ul>
-		\(inaccessibleScans.map { "<li>\($0.input)</li>" }.joined(separator: "\n"))
-		</ul>
-		"""
-	}
-
-	private func sendEmailReport(to email: String, user: User, with content: String, on req: Request) async throws {
-		guard let sender = Environment.get("BREVO_SENDER") else {
-			throw Abort(.internalServerError, reason: "Missing Brevo credentials")
-		}
-
-		let email = try Email(
-			from: EmailAddress(address: sender, name: "LinkGuard"),
-			to: [EmailAddress(address: email)],
-			subject: "Votre rapport de scan LinkGuard",
-			body: content,
-			isBodyHtml: true
-		)
-
-		try await req.application.smtp.send(email)
 	}
 }

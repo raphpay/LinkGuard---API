@@ -57,6 +57,9 @@ struct ScanController: RouteCollection {
 		let scan = input.toModel()
 		let linkResult = try await ScanController.handleScan(scan, on: req)
 
+		let emailContent = try await EmailService.generateEmailReportForSingleScan(scan, email: input.email, on: req.db)
+		try await EmailService.sendEmailReport(to: input.email, with: emailContent, on: req)
+
 		return try scan.toOutput(result: linkResult)
 	}
 
