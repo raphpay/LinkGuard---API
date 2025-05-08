@@ -10,8 +10,15 @@ import Vapor
 import Smtp
 
 struct EmailService {
-	static func generateEmailReport(for scans: [Scan], user: User) -> String {
-		let inaccessibleScans = scans.filter { $0.linkResult?.isAccessible == false }
+	static func generateEmailReport(for scans: [Scan], user: User, on database: any Database) async throws -> String {
+		var inaccessibleScans = [Scan]()
+		for scan in scans {
+			if let linkResult = try await scan.$linkResult.get(on: database) {
+				if !linkResult.isAccessible {
+					inaccessibleScans.append(scan)
+				}
+			}
+		}
 
 		return """
 		<h2>Rapport de scan pour \(user.email)</h2>

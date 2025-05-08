@@ -49,7 +49,7 @@ struct ScanJob: AsyncScheduledJob {
 					}
 				}
 
-				let htmlContent = EmailService.generateEmailReport(for: recentScans, user: user)
+				let htmlContent = try await EmailService.generateEmailReport(for: recentScans, user: user, on: req.db)
 				try await EmailService.sendEmailReport(to: user.email, with: htmlContent, on: req)
 			}
 		}
