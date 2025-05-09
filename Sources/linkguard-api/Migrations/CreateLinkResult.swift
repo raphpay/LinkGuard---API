@@ -14,6 +14,7 @@ struct CreateLinkResult: AsyncMigration {
 			.id()
 			.field(LinkResult.V20250505.statusCode, .int16, .required)
 			.field(LinkResult.V20250505.isAccessible, .bool, .required)
+			.field(LinkResult.V20250505.responseTime, .int16, .required)
 			.field(LinkResult.V20250505.scanID, .uuid, .required)
 			.create()
 	}

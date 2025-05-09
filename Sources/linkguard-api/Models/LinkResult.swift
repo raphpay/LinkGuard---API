@@ -20,6 +20,9 @@ final class LinkResult: Model, Content, @unchecked Sendable {
 	@Field(key: LinkResult.V20250505.isAccessible)
 	var isAccessible: Bool
 
+	@Field(key: LinkResult.V20250505.responseTime)
+	var responseTime: Int
+
 	@Parent(key: LinkResult.V20250505.scanID)
 	var scan: Scan
 
@@ -28,11 +31,13 @@ final class LinkResult: Model, Content, @unchecked Sendable {
 	init(id: UUID? = nil,
 		 statusCode: Int,
 		 isAccessible: Bool,
+		 responseTime: Int,
 		 scanID: Scan.IDValue
 	) {
 		self.id = id
 		self.statusCode = statusCode
 		self.isAccessible = isAccessible
+		self.responseTime = responseTime
 		self.$scan.id = scanID
 	}
 }

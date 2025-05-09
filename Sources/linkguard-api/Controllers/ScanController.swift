@@ -15,8 +15,11 @@ struct ScanController: RouteCollection {
 	func boot(routes: any RoutesBuilder) throws {
 		// Group routes under "/api"
 		let scans = routes.grouped("api", "scans")
-		// Group routes under "/api/scans" and apply authentication and user guard middlewares
+
 		scans.post("scan-without-account", use: createWithoutAccount)
+
+		// POST - Create multiple scans and linkresults
+		scans.post("bulk", use: createWithBulk)
 
 		// Defines middlewares for bearer authentication
 		let tokenAuthMiddleware = Token.authenticator()
@@ -55,12 +58,8 @@ struct ScanController: RouteCollection {
 		}
 
 		let scan = input.toModel()
-		let linkResult = try await ScanController.handleScan(scan, on: req)
 
-		let emailContent = try await EmailService.generateEmailReportForSingleScan(scan, email: input.email, on: req.db)
-		try await EmailService.sendEmailReport(to: input.email, with: emailContent, on: req)
-
-		return try scan.toOutput(result: linkResult)
+		return try await generateScan(scan: scan, email: input.email, on: req)
 	}
 
 	/// Creates a new scan for an authenticated user.
@@ -77,7 +76,7 @@ struct ScanController: RouteCollection {
 		var usersScans = scans
 		usersScans.append(scan)
 
-		var linkResult = LinkResult(statusCode: 0, isAccessible: false, scanID: UUID())
+		var linkResult = LinkResult(statusCode: 0, isAccessible: false, responseTime: 0, scanID: UUID())
 
 		let canScan = try await ScanController.checkQuota(with: plan, and: usersScans, on: req)
 		if canScan {
@@ -87,6 +86,31 @@ struct ScanController: RouteCollection {
 		}
 
 		return try scan.toOutput(result: linkResult)
+	}
+
+	@Sendable
+	func createWithBulk(req: Request) async throws -> [Scan.Output] {
+		let input = try req.content.decode(Scan.BulkInput.self)
+		guard input.email.isValidEmail() else {
+			throw Abort(.badRequest, reason: "badRequest.invalidEmail")
+		}
+
+		let existingScanCount = try await Scan.query(on: req.db)
+			.filter(\.$email == input.email)
+			.count()
+
+		guard existingScanCount == 0 else {
+			throw Abort(.forbidden, reason: "forbidden.quotaReached")
+		}
+
+		var scans: [Scan.Output] = []
+		for url in input.urls {
+			let scan = Scan(input: url, email: input.email)
+			let output = try await self.generateScan(scan: scan, email: input.email, on: req)
+			scans.append(output)
+		}
+
+		return scans
 	}
 
 	// MARK: - READ
@@ -120,7 +144,7 @@ struct ScanController: RouteCollection {
 		guard authUser.isAdmin else {
 			throw Abort(.unauthorized, reason: "unauthorized.role")
 		}
-		
+
 		let scanID = try await getScanID(on: req)
 		let scan = try await getScan(scanID, on: req.db)
 
@@ -166,6 +190,15 @@ extension ScanController {
 }
 
 extension ScanController {
+	private func generateScan(scan: Scan, email: String, on req: Request) async throws -> Scan.Output {
+		let linkResult = try await ScanController.handleScan(scan, on: req)
+
+		let emailContent = try await EmailService.generateEmailReportForSingleScan(scan, email: email, on: req.db)
+		try await EmailService.sendEmailReport(to: email, with: emailContent, on: req)
+
+		return try scan.toOutput(result: linkResult)
+	}
+
 	static func checkQuota(with plan: SubscriptionPlan, and scans: [Scan], on req: Request) async throws -> Bool {
 		// Check quota
 		if scans.count >= plan.maxUrls {
@@ -187,20 +220,32 @@ extension ScanController {
 
 		var statusCode: Int = 0
 		var isAccessible = false
+		var responseTime: Int = 0
+
+		let start = DispatchTime.now()
 
 		do {
 			let response = try await client.get(URI(string: scan.input))
+			let end = DispatchTime.now()
+			responseTime = Int((end.uptimeNanoseconds - start.uptimeNanoseconds) / 1_000_000) // in ms
+
 			statusCode = Int(response.status.code)
 			isAccessible = (200..<400).contains(statusCode)
 		} catch {
-			// URL inaccessible
+			let end = DispatchTime.now()
+			responseTime = Int((end.uptimeNanoseconds - start.uptimeNanoseconds) / 1_000_000) // in ms
 			statusCode = 0
 			isAccessible = false
 		}
 
 		try await scan.save(on: req.db)
 
-		let linkResult = LinkResult(statusCode: statusCode, isAccessible: isAccessible, scanID: try scan.requireID())
+		let linkResult = LinkResult(
+			statusCode: statusCode,
+			isAccessible: isAccessible,
+			responseTime: responseTime,
+			scanID: try scan.requireID()
+		)
 
 		try await linkResult.save(on: req.db)
 
