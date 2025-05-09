@@ -14,5 +14,6 @@ extension LinkResult {
 		static let statusCode = FieldKey(stringLiteral: "statusCode")
 		static let isAccessible = FieldKey(stringLiteral: "isAccessible")
 		static let scanID = FieldKey(stringLiteral: "scanID")
+		static let responseTime = FieldKey(stringLiteral: "responseTime")
 	}
 }

@@ -26,6 +26,11 @@ extension Scan {
 			.init(input: input, email: email, userID: nil)
 		}
 	}
+
+	struct BulkInput: Content {
+		let urls: [String]
+		let email: String
+	}
 }
 
 extension Scan {
