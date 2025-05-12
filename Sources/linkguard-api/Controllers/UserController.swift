@@ -7,6 +7,7 @@
 
 import Fluent
 import Vapor
+import Smtp
 
 struct UserController: RouteCollection {
 	func boot(routes: any RoutesBuilder) throws {
@@ -48,6 +49,8 @@ extension UserController {
 		let tokenAuthGroup = routes.grouped(tokenAuthMiddleware, guardAuthMiddleware)
 		// UPDATE: Modify a user
 		tokenAuthGroup.put(":userID", use: update)
+		// Update Modify password
+		tokenAuthGroup.put("password", use: changePassword)
 	}
 }
 
@@ -60,10 +63,9 @@ extension UserController {
 	/// - Note: This function validates the input parameters and creates a new user with the provided information.
 	///        It also hashes the password before saving it to the database.
 	@Sendable
-	func create(req: Request) async throws -> Token {
+	func create(req: Request) async throws -> User.PublicOutput {
 		let input = try req.content.decode(User.Input.self)
-		_ = try await create(input: input, on: req.db)
-		return try await TokenController().loginToAccount(on: req)
+		return try await create(input: input, on: req.db)
 	}
 
 	// MARK: - READ
@@ -180,6 +182,45 @@ extension UserController {
 		try await updatedUser.update(on: req.db)
 
 		return try user.toPublicOutput()
+	}
+
+	@Sendable
+	func changePassword(_ req: Request) async throws -> Token {
+		let user = try req.auth.require(User.self)
+		let input = try req.content.decode(User.ChangePasswordInput.self)
+
+		// 1. Verify current password
+		guard try Bcrypt.verify(input.currentPassword, created: user.passwordHash) else {
+			throw Abort(.unauthorized, reason: "unauthorized.incorrectPassword")
+		}
+
+		// 2. Check new password strength or duplication
+		guard input.currentPassword != input.newPassword else {
+			throw Abort(.badRequest, reason: "badRequest.passwordDuplication")
+		}
+
+		// 3. Hash new password and update
+		user.passwordHash = try Bcrypt.hash(input.newPassword)
+		try await user.update(on: req.db)
+
+		// 4. Invalidate tokens/sessions here
+		let token = try await TokenController().generateToken(for: user, on: req)
+
+		// 5. Send confirmation email
+		guard let sender = Environment.get("BREVO_SENDER") else {
+			throw Abort(.internalServerError, reason: "Missing Brevo credentials")
+		}
+
+		let emailObject = try Email(
+			from: EmailAddress(address: sender, name: "LinkGuard"),
+			to: [EmailAddress(address: user.email)],
+			subject: "Votre rapport de scan LinkGuard",
+			body: "Mot de passe changé avec succès"
+		)
+
+		try await req.application.smtp.send(emailObject)
+
+		return token
 	}
 }
 

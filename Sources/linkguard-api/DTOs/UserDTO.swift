@@ -86,6 +86,11 @@ extension User {
 			return updatedUser
 		}
 	}
+
+	struct ChangePasswordInput: Content {
+		let currentPassword: String
+		let newPassword: String
+	}
 }
 
 extension User {

@@ -189,7 +189,7 @@ extension TokenController {
 	///     If the request parameters cannot be parsed, it throws a `badRequest` error.
 	/// - Important: This function should be called with caution and should only be used by administrators.
 	private func getTokenID(on req: Request) async throws -> Token.IDValue {
-		guard let tokenID = req.parameters.get("userID", as: Token.IDValue.self) else {
+		guard let tokenID = req.parameters.get("tokenID", as: Token.IDValue.self) else {
 			throw Abort(.badRequest, reason: "badRequest.missingTokenID")
 		}
 
@@ -264,27 +264,38 @@ extension TokenController {
 			// Successful login, reset failed attempts
 			try await user.save(on: req.db)
 
-			// Generate or update the token
-			let token = try await Token
-				.query(on: req.db)
-				.filter(\.$user.$id == user.id!)
-				.first()
-
-			if let token = token {
-				token.value = [UInt8].random(count: 16).base64
-				try await token.update(on: req.db)
-				return token
-			} else {
-				// If no token exists, create a new one
-				let newToken = try Token.generate(for: user)
-				try await newToken.save(on: req.db)
-				return newToken
-			}
+			return try await generateToken(for: user, on: req)
 		} else {
 			try await user.save(on: req.db)
 
 			// Throw unauthorized error
 			throw Abort(.unauthorized, reason: "unauthorized.invalidCredentials")
 		}
+	}
+
+	func generateToken(for user: User, on req: Request) async throws -> Token {
+		// Generate or update the token
+		let token = try await Token
+			.query(on: req.db)
+			.filter(\.$user.$id == user.id!)
+			.first()
+
+		if let token = token {
+			token.value = [UInt8].random(count: 16).base64
+			try await token.update(on: req.db)
+			return token
+		} else {
+			// If no token exists, create a new one
+			let newToken = try Token.generate(for: user)
+			try await newToken.save(on: req.db)
+			return newToken
+		}
+	}
+
+	func getTokenForUser(_ user: User, on database: any Database) async throws -> Token {
+		return try await Token
+			.query(on: database)
+			.filter(\.$user.$id == user.id!)
+			.first()!
 	}
 }
