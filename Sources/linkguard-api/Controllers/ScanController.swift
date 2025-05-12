@@ -19,7 +19,9 @@ struct ScanController: RouteCollection {
 		scans.post("scan-without-account", use: createWithoutAccount)
 
 		// POST - Create multiple scans and linkresults
-		scans.post("bulk", use: createWithBulk)
+		scans.post("bulk", use: createWithBulkWithoutAccount)
+
+		scans.post("bulk", "user", use: createWithBulk)
 
 		// Defines middlewares for bearer authentication
 		let tokenAuthMiddleware = Token.authenticator()
@@ -89,8 +91,8 @@ struct ScanController: RouteCollection {
 	}
 
 	@Sendable
-	func createWithBulk(req: Request) async throws -> [Scan.Output] {
-		let input = try req.content.decode(Scan.BulkInput.self)
+	func createWithBulkWithoutAccount(req: Request) async throws -> [Scan.Output] {
+		let input = try req.content.decode(Scan.BulkInputWithoutAccount.self)
 		guard input.email.isValidEmail() else {
 			throw Abort(.badRequest, reason: "badRequest.invalidEmail")
 		}
@@ -107,6 +109,30 @@ struct ScanController: RouteCollection {
 		for url in input.urls {
 			let scan = Scan(input: url, email: input.email)
 			let output = try await self.generateScan(scan: scan, email: input.email, on: req)
+			scans.append(output)
+		}
+
+		return scans
+	}
+
+	@Sendable
+	func createWithBulk(req: Request) async throws -> [Scan.Output] {
+		let input = try req.content.decode(Scan.BulkInput.self)
+
+		let existingScanCount = try await Scan.query(on: req.db)
+			.filter(\.$id == input.userID)
+			.count()
+
+		guard existingScanCount == 0 else {
+			throw Abort(.forbidden, reason: "forbidden.quotaReached")
+		}
+
+		let user = try await UserController().getUser(input.userID, on: req)
+
+		var scans: [Scan.Output] = []
+		for url in input.urls {
+			let scan = Scan(input: url, userID: input.userID)
+			let output = try await self.generateScan(scan: scan, email: user.email, on: req)
 			scans.append(output)
 		}
 
