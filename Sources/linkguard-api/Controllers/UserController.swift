@@ -63,10 +63,9 @@ extension UserController {
 	/// - Note: This function validates the input parameters and creates a new user with the provided information.
 	///        It also hashes the password before saving it to the database.
 	@Sendable
-	func create(req: Request) async throws -> Token {
+	func create(req: Request) async throws -> User.PublicOutput {
 		let input = try req.content.decode(User.Input.self)
-		_ = try await create(input: input, on: req.db)
-		return try await TokenController().loginToAccount(on: req)
+		return try await create(input: input, on: req.db)
 	}
 
 	// MARK: - READ
