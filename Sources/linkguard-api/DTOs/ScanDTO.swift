@@ -29,6 +29,11 @@ extension Scan {
 
 	struct BulkInput: Content {
 		let urls: [String]
+		let userID: User.IDValue
+	}
+
+	struct BulkInputWithoutAccount: Content {
+		let urls: [String]
 		let email: String
 	}
 }
